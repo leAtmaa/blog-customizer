@@ -7,6 +7,17 @@
 	max-width: var(--container-width, auto);
 	margin: 0 auto;
 	padding: 72px 0 144px;
+
+	&,
+	& * {
+		color: inherit;
+		font-family: inherit;
+	}
+
+	&,
+	& *:not(h1) {
+		font-size: inherit;
+	}
 }
 
 .titleDescription {

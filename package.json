@@ -77,7 +77,7 @@
 		]
 	},
 	"dependencies": {
-		"clsx": "^2.1.0",
+		"clsx": "^2.1.1",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0"
 	},
@@ -91,5 +91,15 @@
 			"path": "./node_modules/cz-conventional-changelog"
 		}
 	},
-	"homepage": "./"
+	"homepage": "http://./",
+	"description": "[Макет проекта](https://www.figma.com/file/FEeiiGLOsE7ktXbPpBxYoD/Custom-dropdown?type=design&node-id=0%3A1&mode=design&t=eXRJnWC6Xsuw0qR4-1)",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/leAtmaa/blog-customizer.git"
+	},
+	"keywords": [],
+	"author": "",
+	"bugs": {
+		"url": "https://github.com/leAtmaa/blog-customizer/issues"
+	}
 }
