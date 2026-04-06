@@ -3,6 +3,7 @@ import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 import { Select } from 'src/ui/select/Select';
 import { RadioGroup } from 'src/ui/radio-group/RadioGroup';
+import { Separator } from 'src/ui/separator/Separator';
 import clsx from 'clsx';
 
 import 'src/fonts/font.scss';
@@ -11,7 +12,6 @@ import styles from './ArticleParamsForm.module.scss';
 
 import {
 	type ArticleStateType,
-	defaultArticleState,
 	fontFamilyOptions,
 	fontColors,
 	backgroundColors,
@@ -27,6 +27,32 @@ interface ArticleParamsFormProps {
 	currentParams: ArticleStateType;
 }
 
+// Компонент для меню, который использует хук
+const MenuContent = ({
+	onClose,
+	children,
+}: {
+	onClose: () => void;
+	children: React.ReactNode;
+}) => {
+	const menuRef = useRef<HTMLDivElement>(null);
+
+	useOutsideClickClose({
+		isOpen: true,
+		rootRef: menuRef,
+		onClose: onClose,
+		onChange: () => {},
+	});
+
+	return (
+		<aside
+			ref={menuRef}
+			className={clsx(styles.container, styles.container_open)}>
+			{children}
+		</aside>
+	);
+};
+
 export const ArticleParamsForm = ({
 	onApply,
 	onReset,
@@ -35,68 +61,41 @@ export const ArticleParamsForm = ({
 	// Состояние для отслеживания открыта/закрыта форма (меню)
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-	// Состояния для готовых компонентов (шрифт, размер, ширина)
+	// Состояния для параметров
 	const [selectedFont, setSelectedFont] = useState(
 		currentParams.fontFamilyOption
 	);
 	const [selectedFontSize, setSelectedFontSize] = useState(
 		currentParams.fontSizeOption
 	);
+	const [selectedFontColor, setSelectedFontColor] = useState(
+		currentParams.fontColor
+	);
+	const [selectedBgColor, setSelectedBgColor] = useState(
+		currentParams.backgroundColor
+	);
 	const [selectedWidth, setSelectedWidth] = useState(
 		currentParams.contentWidth
 	);
-
-	// Состояния для кастомных селектов цвета
-	const [isColorSelectOpen, setIsColorSelectOpen] = useState(false);
-	const [selectedColor, setSelectedColor] = useState(
-		currentParams.fontColor.title
-	);
-
-	const [isBgColorSelectOpen, setIsBgColorSelectOpen] = useState(false);
-	const [selectedBgColor, setSelectedBgColor] = useState(
-		currentParams.backgroundColor.title
-	);
-
-	// Создаем ref для меню
-	const menuRef = useRef<HTMLDivElement>(null);
-
-	// Используем хук для закрытия меню при клике вне
-	useOutsideClickClose({
-		isOpen: isMenuOpen,
-		rootRef: menuRef,
-		onClose: () => setIsMenuOpen(false),
-		onChange: setIsMenuOpen,
-	});
 
 	// Синхронизация с currentParams при изменении извне
 	useEffect(() => {
 		setSelectedFont(currentParams.fontFamilyOption);
 		setSelectedFontSize(currentParams.fontSizeOption);
+		setSelectedFontColor(currentParams.fontColor);
+		setSelectedBgColor(currentParams.backgroundColor);
 		setSelectedWidth(currentParams.contentWidth);
-		setSelectedColor(currentParams.fontColor.title);
-		setSelectedBgColor(currentParams.backgroundColor.title);
 	}, [currentParams]);
-
-	const colorOptionsLocal = fontColors.map((color) => ({
-		name: color.title,
-		value: color.value,
-	}));
 
 	// Обработчик отправки формы
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// Находим объекты для кастомных цветов
-		const fontColorObject = fontColors.find((c) => c.title === selectedColor);
-		const bgColorObject = backgroundColors.find(
-			(c) => c.title === selectedBgColor
-		);
-
 		const newParams: ArticleStateType = {
 			fontFamilyOption: selectedFont,
 			fontSizeOption: selectedFontSize,
-			fontColor: fontColorObject || defaultArticleState.fontColor,
-			backgroundColor: bgColorObject || defaultArticleState.backgroundColor,
+			fontColor: selectedFontColor,
+			backgroundColor: selectedBgColor,
 			contentWidth: selectedWidth,
 		};
 
@@ -116,16 +115,13 @@ export const ArticleParamsForm = ({
 	return (
 		<>
 			<ArrowButton isOpen={isMenuOpen} onClick={toggleMenu} />
+			{/* Проверка if (!isMenuOpen) return; - меню не рендерится, если закрыто */}
 			{isMenuOpen && (
-				<aside
-					ref={menuRef}
-					className={clsx(styles.container, {
-						[styles.container_open]: isMenuOpen,
-					})}>
+				<MenuContent onClose={() => setIsMenuOpen(false)}>
 					<form className={styles.form} onSubmit={handleSubmit}>
 						<h2 className={styles.tittleForm}>Задайте параметры</h2>
 
-						{/* Шрифт - готовый */}
+						{/* Шрифт */}
 						<Select
 							selected={selectedFont}
 							options={fontFamilyOptions}
@@ -133,7 +129,7 @@ export const ArticleParamsForm = ({
 							title='Шрифт'
 						/>
 
-						{/* Размер шрифта - готовый */}
+						{/* Размер шрифта */}
 						<RadioGroup
 							name='fontSize'
 							options={fontSizeOptions}
@@ -142,173 +138,25 @@ export const ArticleParamsForm = ({
 							title='Размер шрифта'
 						/>
 
-						{/* Цвет шрифта - кастомный */}
-						<div className={styles.selectWrapper}>
-							<p className={styles.labelOption}>Цвет шрифта</p>
-							<div
-								className={clsx(
-									styles.customSelect,
-									isColorSelectOpen && styles.customSelectOpen
-								)}
-								onClick={() => setIsColorSelectOpen(!isColorSelectOpen)}>
-								<div className={styles.selectedColorDisplay}>
-									<div className={styles.colorSquareContainer}>
-										<div
-											className={styles.colorSquare}
-											style={{
-												backgroundColor: colorOptionsLocal.find(
-													(c) => c.name === selectedColor
-												)?.value,
-											}}
-											data-color={selectedColor === 'Белый' ? 'white' : ''}
-										/>
-										{selectedColor && (
-											<div
-												className={clsx(
-													styles.selectedCircle,
-													selectedColor === 'Белый' &&
-														styles.selectedCircleBlack
-												)}
-											/>
-										)}
-									</div>
-									<span>{selectedColor}</span>
-								</div>
-							</div>
-							{isColorSelectOpen && (
-								<div className={styles.optionsList}>
-									{colorOptionsLocal.map((color) => {
-										const isDisabled = color.name === selectedColor;
-										return (
-											<div
-												key={color.name}
-												className={clsx(
-													styles.optionItem,
-													styles.colorOption,
-													selectedColor === color.name &&
-														styles.optionItemSelected,
-													isDisabled && styles.optionItemDisabled
-												)}
-												onClick={() => {
-													if (!isDisabled) {
-														setSelectedColor(color.name);
-														setIsColorSelectOpen(false);
-													}
-												}}>
-												<div className={styles.colorDisplay}>
-													<div className={styles.colorSquareContainer}>
-														<div
-															className={clsx(
-																styles.colorSquare,
-																isDisabled && styles.disabled
-															)}
-															style={{ backgroundColor: color.value }}
-															data-color={color.name === 'Белый' ? 'white' : ''}
-														/>
-														{selectedColor === color.name && (
-															<div
-																className={clsx(
-																	styles.selectedCircle,
-																	color.name === 'Белый' &&
-																		styles.selectedCircleBlack
-																)}
-															/>
-														)}
-													</div>
-													<span>{color.name}</span>
-												</div>
-											</div>
-										);
-									})}
-								</div>
-							)}
-						</div>
+						{/* Цвет шрифта */}
+						<Select
+							selected={selectedFontColor}
+							options={fontColors}
+							onChange={setSelectedFontColor}
+							title='Цвет шрифта'
+						/>
 
-						<div className={styles.divider}></div>
+						<Separator />
 
-						{/* Цвет фона - кастомный */}
-						<div className={styles.selectWrapper}>
-							<p className={styles.labelOption}>Цвет фона</p>
-							<div
-								className={clsx(
-									styles.customSelect,
-									isBgColorSelectOpen && styles.customSelectOpen
-								)}
-								onClick={() => setIsBgColorSelectOpen(!isBgColorSelectOpen)}>
-								<div className={styles.selectedColorDisplay}>
-									<div className={styles.colorSquareContainer}>
-										<div
-											className={styles.colorSquare}
-											style={{
-												backgroundColor: colorOptionsLocal.find(
-													(c) => c.name === selectedBgColor
-												)?.value,
-											}}
-											data-color={selectedBgColor === 'Белый' ? 'white' : ''}
-										/>
-										{selectedBgColor && (
-											<div
-												className={clsx(
-													styles.selectedCircle,
-													selectedBgColor === 'Белый' &&
-														styles.selectedCircleBlack
-												)}
-											/>
-										)}
-									</div>
-									<span>{selectedBgColor}</span>
-								</div>
-							</div>
-							{isBgColorSelectOpen && (
-								<div className={styles.optionsList}>
-									{colorOptionsLocal.map((color) => {
-										const isDisabled = color.name === selectedBgColor;
-										return (
-											<div
-												key={color.name}
-												className={clsx(
-													styles.optionItem,
-													styles.colorOption,
-													selectedBgColor === color.name &&
-														styles.optionItemSelected,
-													isDisabled && styles.optionItemDisabled
-												)}
-												onClick={() => {
-													if (!isDisabled) {
-														setSelectedBgColor(color.name);
-														setIsBgColorSelectOpen(false);
-													}
-												}}>
-												<div className={styles.colorDisplay}>
-													<div className={styles.colorSquareContainer}>
-														<div
-															className={clsx(
-																styles.colorSquare,
-																isDisabled && styles.disabled
-															)}
-															style={{ backgroundColor: color.value }}
-															data-color={color.name === 'Белый' ? 'white' : ''}
-														/>
-														{selectedBgColor === color.name && (
-															<div
-																className={clsx(
-																	styles.selectedCircle,
-																	color.name === 'Белый' &&
-																		styles.selectedCircleBlack
-																)}
-															/>
-														)}
-													</div>
-													<span>{color.name}</span>
-												</div>
-											</div>
-										);
-									})}
-								</div>
-							)}
-						</div>
+						{/* Цвет фона */}
+						<Select
+							selected={selectedBgColor}
+							options={backgroundColors}
+							onChange={setSelectedBgColor}
+							title='Цвет фона'
+						/>
 
-						{/* Ширина контента - готовый */}
+						{/* Ширина контента */}
 						<Select
 							selected={selectedWidth}
 							options={contentWidthArr}
@@ -326,7 +174,7 @@ export const ArticleParamsForm = ({
 							<Button title='Применить' htmlType='submit' type='apply' />
 						</div>
 					</form>
-				</aside>
+				</MenuContent>
 			)}
 		</>
 	);

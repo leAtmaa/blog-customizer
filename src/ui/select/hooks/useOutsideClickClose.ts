@@ -1,3 +1,5 @@
+// src/ui/select/hooks/useOutsideClickClose.ts
+
 import { useEffect } from 'react';
 
 type UseOutsideClickClose = {
@@ -14,6 +16,9 @@ export const useOutsideClickClose = ({
 	onChange,
 }: UseOutsideClickClose) => {
 	useEffect(() => {
+		// Добавлена проверка
+		if (!isOpen) return;
+
 		const handleClick = (event: MouseEvent) => {
 			const { target } = event;
 			if (target instanceof Node && !rootRef.current?.contains(target)) {
